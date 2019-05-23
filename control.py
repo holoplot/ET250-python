@@ -13,6 +13,7 @@ UDP_PORT = 6668
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 if not args.send_only:
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(("0.0.0.0", UDP_PORT))
 
 COMMAND_MOVE_FORWARD = 1

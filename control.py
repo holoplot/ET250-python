@@ -5,12 +5,15 @@ import struct
 parser = argparse.ArgumentParser(description='Control ET 250-3D turntables')
 parser.add_argument('--addr', nargs=1, help='The IP address of the ET 250-3D device')
 parser.add_argument('--degrees', nargs=1, type=float, help='Degrees to move (for forward and backward commands')
-parser.add_argument('--command', nargs=1, help='Command to execute (forward, backward, stop, zero')
+parser.add_argument('--command', nargs=1, help='Command to execute (forward, backward, stop, zero)')
+parser.add_argument('--send-only', nargs='?', const=True, default=False, help='Only send commands via UDP, and ignore the replies')
 args = parser.parse_args()
 
 UDP_PORT = 6668
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(("0.0.0.0", UDP_PORT))
+
+if not args.send_only:
+    sock.bind(("0.0.0.0", UDP_PORT))
 
 COMMAND_MOVE_FORWARD = 1
 COMMAND_MOVE_BACKWARD = 2
@@ -29,8 +32,11 @@ def send_command(command, arg = 0):
     message = struct.pack(">BhB", command, arg, checksum)
     sock.sendto(message, (args.addr[0], UDP_PORT))
 
-    reply = sock.recvfrom(7)
-    return reply[0]
+    if args.send_only:
+        return [REPLY_OK]
+    else:
+        reply = sock.recvfrom(7)
+        return reply[0]
 
 def check_simple_command(reply):
     return reply[0] == REPLY_OK

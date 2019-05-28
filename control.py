@@ -57,6 +57,10 @@ def move_backward(degree):
     return check_simple_command(reply)
 
 def set_zero():
+    if args.send_only:
+        print("ERROR: The ZERO command does not work in send-only mode")
+        return [REPLY_ERR]
+
     reply = send_command(COMMAND_SET_ZERO)
     return check_simple_command(reply)
 

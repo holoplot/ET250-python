@@ -1,11 +1,12 @@
 import socket
 import argparse
 import struct
+from sys import exit
 
 parser = argparse.ArgumentParser(description='Control ET 250-3D turntables')
 parser.add_argument('--addr', nargs=1, help='The IP address of the ET 250-3D device')
 parser.add_argument('--degrees', nargs=1, type=float, help='Degrees to move (for forward and backward commands')
-parser.add_argument('--command', nargs=1, help='Command to execute (forward, backward, stop, zero)')
+parser.add_argument('--command', nargs=1, help='Command to execute (forward, backward, stop, zero, status)')
 parser.add_argument('--send-only', nargs='?', const=True, default=False, help='Only send commands via UDP, and ignore the replies')
 args = parser.parse_args()
 
@@ -67,7 +68,18 @@ def set_zero():
 def read_angle():
     reply = send_command(COMMAND_READ_ANGLE)
     (status, degree, direction, checksum) = struct.unpack(">BIBB", reply)
-    #print("status=%d degree=%d dir=%d" % (status, degree, direction))
+
+    if status == 4:
+        status = "moving"
+    elif status == 5:
+        status = "stopped"
+
+    if direction == 1:
+        direction = "counterclockwise"
+    elif direction == 2:
+        direction = "clockwise"
+
+    print("status= %s dir= %s degree= %.2f" % (status, direction, float(degree / 10)))
     return float(degree / 10)
 
 def move_zero():
@@ -94,6 +106,9 @@ if __name__ == "__main__":
         ret = move_zero()
     elif args.command[0] == "stop":
         ret = stop()
+    elif args.command[0] == "status":
+        ret = True
+        read_angle()
 
     if not ret:
         print("ERROR processing command!")
